@@ -24,25 +24,80 @@ function toggleFetchOverlay(show) { document.getElementById('global-app-fetch-lo
 
 function parseToSafeTimestamp(dateInput) {
   if (!dateInput) return 0;
+  if (dateInput instanceof Date) return dateInput.getTime();
+  if (typeof dateInput === 'string') {
+    let clean = dateInput.replace(/\|/g, '').trim();
+    if (clean.includes('/') && clean.includes(' ')) {
+      let parts = clean.split(' ');
+      let dateParts = parts[0].split('/');
+      let timeParts = parts[1].split(':');
+      if (dateParts.length === 3) {
+        let day = parseInt(dateParts[0], 10);
+        let monthIdx = parseInt(dateParts[1], 10) - 1;
+        let year = dateParts[2].length === 4 ? parseInt(dateParts[2], 10) : parseInt(dateParts[0], 10);
+        if (dateParts[0].length === 4) { year = parseInt(dateParts[0], 10); day = parseInt(dateParts[2], 10); }
+        let hrs = parseInt(timeParts[0] || 0, 10);
+        let mins = parseInt(timeParts[1] || 0, 10);
+        let secs = parseInt(timeParts[2] || 0, 10);
+        let compiledObj = new Date(year, monthIdx, day, hrs, mins, secs);
+        if (!isNaN(compiledObj.getTime())) return compiledObj.getTime();
+      }
+    }
+  }
   let nativeDateObj = new Date(dateInput);
   return isNaN(nativeDateObj.getTime()) ? 0 : nativeDateObj.getTime();
 }
 
 function formatCustomDateTime(dateInput) {
   if (!dateInput) return "";
-  let dateObj = new Date(dateInput);
+  let dateObj;
+  if (typeof dateInput === 'string') {
+    let cleanInput = dateInput.replace(/\|/g, '').trim();
+    if (cleanInput.includes('/') && cleanInput.includes(' ')) {
+      let parts = cleanInput.split(' ');
+      let dateParts = parts[0].split('/');
+      let timeParts = parts[1].split(':');
+      if (dateParts.length === 3) {
+        let day, monthIdx, year;
+        if (dateParts[2].length === 4) { day = parseInt(dateParts[0], 10); monthIdx = parseInt(dateParts[1], 10) - 1; year = parseInt(dateParts[2], 10); }
+        else if (dateParts[0].length === 4) { year = parseInt(dateParts[0], 10); monthIdx = parseInt(dateParts[1], 10) - 1; day = parseInt(dateParts[2], 10); }
+        let hours = parseInt(timeParts[0] || 0, 10);
+        let minutes = parseInt(timeParts[1] || 0, 10);
+        let seconds = parseInt(timeParts[2] || 0, 10);
+        dateObj = new Date(year, monthIdx, day, hours, minutes, seconds);
+      }
+    } else if (cleanInput.includes(' ') && cleanInput.includes('-')) {
+      let parts = cleanInput.split(' ');
+      let dateParts = parts[0].split('-');
+      let timeParts = parts[1].split(':');
+      if (dateParts.length === 3) {
+        let year = parseInt(dateParts[0], 10);
+        let monthIdx = parseInt(dateParts[1], 10) - 1;
+        let day = parseInt(dateParts[2], 10);
+        let hours = parseInt(timeParts[0] || 0, 10);
+        let minutes = parseInt(timeParts[1] || 0, 10);
+        let seconds = parseInt(timeParts[2] || 0, 10);
+        dateObj = new Date(year, monthIdx, day, hours, minutes, seconds);
+      }
+    }
+  }
+  if (!dateObj || isNaN(dateObj.getTime())) dateObj = new Date(dateInput);
   if (isNaN(dateObj.getTime())) return dateInput;
   try {
     const dtf = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
     const p = dtf.formatToParts(dateObj).reduce((acc, part) => ({ ...acc, [part.type]: part.value }), {});
-    return `${p.day}-${p.month}-${p.year} | ${p.hour}:${p.minute} ${p.dayPeriod || 'AM'}`;
+    return `${p.day}-${p.month}-${p.year} | ${p.hour}:${p.minute} ${p.dayPeriod || p.ampm || 'AM'}`;
   } catch(e) { return dateInput; }
 }
 
 function resolveTransactionIDValue(log) {
   if (!log) return "N/A";
-  let val = log.txId || log.transactionId || log.txnId || log.utr || log.reference || "N/A";
-  return String(val).trim();
+  let transactionIdValue = log.txId || log.transactionId || log.transactionID || log.txnId || log.txnID || log.id || log.Id || log.ID || log.Transaction || log.transaction;
+  if (transactionIdValue && String(transactionIdValue).trim() !== "" && String(transactionIdValue).trim().toLowerCase() !== "null") return String(transactionIdValue).trim();
+  let rawDetails = log.utr || log.utrNo || log.utrno || log.UTR || log.reference || log.details || "N/A";
+  let val = String(rawDetails).trim();
+  if (val.startsWith("UPI:")) val = val.substring(4).trim(); else if (val.startsWith("Bank:")) val = val.substring(5).trim();
+  return val === "" ? "N/A" : val;
 }
 
 async function callBackendAPI(payload) {
@@ -50,7 +105,7 @@ async function callBackendAPI(payload) {
   return await response.json();
 }
 
-// Updated Sorting Logic: Pending/New sabse uper
+// FINAL SORTING LOGIC: Pending/New sabse uper
 function sortHistoryRecords(records) {
   return [...records].sort((a, b) => {
     let statusA = (a.status || "").toLowerCase() === "pending" ? 0 : 1;
@@ -68,45 +123,27 @@ async function handleLoginSubmit() {
     let res = await callBackendAPI({ action: "checkLogin", mobile: mobile });
     setLoading('login-btn', false, "Verify & Proceed");
     if(res && res.exists) { currentUser = { id: res.userId, name: res.name, mobile: mobile }; loadDashboardLifecycle(); } 
-    else { openRegistrationPopup(mobile); }
-  } catch(e) { setLoading('login-btn', false, "Verify & Proceed"); alert("Network Error. Please try again."); }
+    else openRegistrationPopup(mobile);
+  } catch(e) { setLoading('login-btn', false, "Verify & Proceed"); alert("Network Error."); }
 }
 
 function openRegistrationPopup(mobile) {
   const modal = document.getElementById('global-modal');
   document.getElementById('modal-content-area').innerHTML = `
     <h3 style="color:var(--primary); font-size:18px;">Number Not Registered</h3>
-    <p style="font-size:13px; color:var(--text-muted); margin: 8px 0 20px;">You are not a registered member yet. Fill parameters to continue.</p>
-    <div class="form-group" style="text-align:left;">
-      <label>Full Name</label>
-      <input type="text" id="reg-name" class="form-control" placeholder="Enter Full Name">
-    </div>
-    <div class="form-group" style="text-align:left;">
-      <label>Referral Code (Optional)</label>
-      <input type="text" id="reg-ref" class="form-control" placeholder="e.g. TH4839" value="${autoReferredCode}">
-    </div>
-    <button onclick="submitRegistration('${mobile}')" class="btn btn-secondary">Create Account & Enter</button>
-  `;
+    <div class="form-group" style="text-align:left;"><label>Full Name</label><input type="text" id="reg-name" class="form-control"></div>
+    <div class="form-group" style="text-align:left;"><label>Referral</label><input type="text" id="reg-ref" class="form-control" value="${autoReferredCode}"></div>
+    <button onclick="submitRegistration('${mobile}')" class="btn">Create Account</button>`;
   modal.classList.add('active');
 }
 
 async function submitRegistration(mobile) {
   const name = document.getElementById('reg-name').value.trim();
   const referral = document.getElementById('reg-ref').value.trim();
-  if(!name) { alert("Name field is mandatory."); return; }
+  if(!name) return;
   document.getElementById('global-modal').classList.remove('active');
-  setLoading('login-btn', true, "Verify & Proceed");
   let res = await callBackendAPI({ action: "registerUser", name: name, mobile: mobile, referral: referral });
-  setLoading('login-btn', false, "Verify & Proceed");
-  if(res && res.success) {
-    currentUser = { id: res.userId, name: res.name, mobile: mobile };
-    document.getElementById('modal-content-area').innerHTML = `
-      <div class="modal-icon"><i class="fa-solid fa-circle-check"></i></div>
-      <h2 style="color:var(--primary);">Welcome to TrueHelp</h2>
-      <button onclick="closeModalAndGoDashboard()" class="btn">Go To Dashboard</button>
-    `;
-    document.getElementById('global-modal').classList.add('active');
-  } else { alert(res.error || "Registration failed."); }
+  if(res && res.success) { currentUser = { id: res.userId, name: res.name, mobile: mobile }; loadDashboardLifecycle(); }
 }
 
 function closeModalAndGoDashboard() { document.getElementById('global-modal').classList.remove('active'); loadDashboardLifecycle(); }
@@ -122,34 +159,25 @@ async function loadDashboardLifecycle() {
     if(res && res.success) {
       globalSystemConfig = res;
       document.getElementById('total-fund-display').innerText = "₹" + Number(res.totalFund || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
-      masterHistoryRecords = sortHistoryRecords(res.history || []);
+      let rawLogs = (res.history || []).filter(log => log && log.type);
+      masterHistoryRecords = sortHistoryRecords(rawLogs);
       renderDashboardTransactionRows(masterHistoryRecords);
-      if(res.notification && res.notification.trim() !== "") triggerGlobalNotification(res.notification);
+      if(res.notification) triggerGlobalNotification(res.notification);
     }
-  } catch (e) { toggleFetchOverlay(false); alert("Error loading dashboard data."); }
+  } catch (e) { toggleFetchOverlay(false); }
 }
 
 function renderDashboardTransactionRows(records) {
   const container = document.getElementById('dashboard-history-log-container');
   const viewMoreBtn = document.getElementById('view-more-tx-btn');
   container.innerHTML = "";
-  if(!records || records.length === 0) { container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">No history records found.</div>`; viewMoreBtn.classList.add('hidden'); return; }
   records.slice(0, 4).forEach(log => {
     let isProvide = log.type === "Provide Help";
     container.innerHTML += `
       <div class="log-item ${isProvide ? 'provide' : 'get'}">
-        <div class="log-details">
-          <div>${log.type}</div>
-          <p><i class="fa-solid fa-user-circle"></i> ${log.name}</p>
-          <span>Txn ID: ${resolveTransactionIDValue(log)}</span>
-          <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-solid fa-calendar-alt"></i> ${formatCustomDateTime(log.date)}</span>
-        </div>
-        <div class="log-amount">
-          <div style="color:${isProvide?'var(--secondary)':'#EF4444'}">₹${Math.abs(log.amount || 0).toLocaleString('en-IN')}</div>
-          <span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span>
-        </div>
-      </div>
-    `;
+        <div class="log-details"><div>${log.type}</div><p>${log.name}</p><span>Txn: ${resolveTransactionIDValue(log)}</span><span style="font-size:10px">${formatCustomDateTime(log.date)}</span></div>
+        <div class="log-amount"><div>₹${Math.abs(log.amount)}</div><span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span></div>
+      </div>`;
   });
   viewMoreBtn.classList.toggle('hidden', records.length <= 4);
 }
@@ -161,41 +189,29 @@ function renderFullTransactionRows(records) {
     let isProvide = log.type === "Provide Help";
     container.innerHTML += `
       <div class="log-item ${isProvide ? 'provide' : 'get'}">
-        <div class="log-details">
-          <div>${log.type}</div>
-          <p><i class="fa-solid fa-user-circle"></i> ${log.name}</p>
-          <span>Txn ID: ${resolveTransactionIDValue(log)}</span>
-          <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-solid fa-calendar-alt"></i> ${formatCustomDateTime(log.date)}</span>
-        </div>
-        <div class="log-amount">
-          <div style="color:${isProvide?'var(--secondary)':'#EF4444'}">₹${Math.abs(log.amount || 0).toLocaleString('en-IN')}</div>
-          <span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span>
-        </div>
-      </div>
-    `;
+        <div class="log-details"><div>${log.type}</div><p>${log.name}</p><span>Txn: ${resolveTransactionIDValue(log)}</span><span style="font-size:10px">${formatCustomDateTime(log.date)}</span></div>
+        <div class="log-amount"><div>₹${Math.abs(log.amount)}</div><span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span></div>
+      </div>`;
   });
 }
 
 function openAllTransactionsScreen() { showScreen('all-transactions-screen'); renderFullTransactionRows(masterHistoryRecords); }
-
 function filterTransactionHistory() {
-  const searchVal = document.getElementById('tx-search-box').value.toLowerCase().trim();
-  const filtered = masterHistoryRecords.filter(log => log.name.toLowerCase().includes(searchVal) || resolveTransactionIDValue(log).toLowerCase().includes(searchVal));
-  renderFullTransactionRows(filtered);
+  const val = document.getElementById('tx-search-box').value.toLowerCase();
+  renderFullTransactionRows(masterHistoryRecords.filter(l => l.name.toLowerCase().includes(val) || resolveTransactionIDValue(l).toLowerCase().includes(val)));
 }
 
 function openProvideHelp() { showScreen('provide-help-screen'); }
-
 function triggerUPIPayment() {
-  const amt = document.getElementById('p-amount').value.trim();
+  const amt = document.getElementById('p-amount').value;
   const app = document.getElementById('p-method').value;
   window.location.href = `${app.toLowerCase()}://pay?pa=${globalSystemConfig.upiId}&am=${amt}&cu=INR&pn=TrueHelp`;
   setTimeout(() => document.getElementById('utr-section').classList.remove('hidden'), 1000);
 }
 
 async function submitProvideHelpFinal() {
-  const utr = document.getElementById('p-utr').value.trim();
-  if(utr.length < 6) return alert("Valid UTR required.");
+  const utr = document.getElementById('p-utr').value;
+  if(utr.length < 6) return alert("Valid UTR required");
   setLoading('p-submit-btn', true, "SUBMIT");
   let res = await callBackendAPI({ action: "submitProvideHelp", userId: currentUser.id, amount: document.getElementById('p-amount').value, utr: utr });
   setLoading('p-submit-btn', false, "Submit");
@@ -210,9 +226,9 @@ function toggleGetHelpFields() {
 }
 
 async function submitGetHelpRequest() {
-  setLoading('g-submit-btn', true, "Submit Request to Admin");
+  setLoading('g-submit-btn', true, "Submit");
   let res = await callBackendAPI({ action: "submitGetHelp", userId: currentUser.id, amount: document.getElementById('g-amount').value, reason: document.getElementById('g-reason').value });
-  setLoading('g-submit-btn', false, "Submit Request to Admin");
+  setLoading('g-submit-btn', false, "Submit");
   if(res.success) closeModalAndGoDashboard();
 }
 
@@ -233,8 +249,8 @@ function shareReferralLink() {
 }
 
 function triggerGlobalNotification(text) {
-  document.getElementById('modal-content-area').innerHTML = `<h3>Announcement</h3><p>${text}</p><button onclick="document.getElementById('global-modal').classList.remove('active')" class="btn">Okay</button>`;
+  document.getElementById('modal-content-area').innerHTML = `<h3>Alert</h3><p>${text}</p><button onclick="document.getElementById('global-modal').classList.remove('active')" class="btn">Okay</button>`;
   document.getElementById('global-modal').classList.add('active');
 }
 
-function logout() { currentUser = null; showScreen('login-screen'); }
+function logout() { currentUser = null; document.getElementById('login-mobile').value = ""; showScreen('login-screen'); }
