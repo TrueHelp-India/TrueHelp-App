@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrueHelp - Real Help. Real Trust.</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="phone-container">
+  <div id="global-app-fetch-loader" class="app-fetch-loading-overlay hidden">
+    <div class="loading-spinner-circle"></div>
+    <div class="loading-spinner-text">Please Wait...</div>
+  </div>
+
+  <div id="intro-screen" class="screen active">
+    <div class="logo-badge-container">
+      <div class="shield-emblem">
+        <div class="shield-inner-glow"></div>
+        <div class="rupee-symbol-mark">₹</div>
+        <div class="handshake-icon-mark"><i class="fa-solid fa-handshake"></i></div>
+      </div>
+      <h1 class="brand-text-intro">True<span>Help</span></h1>
+      <p class="brand-slogan-intro">Real Help. Real Trust.</p>
+    </div>
+  </div>
+
+  <div id="login-screen" class="screen">
+    <div style="margin-top: 40px;">
+      <h1 class="auth-title">TrueHelp</h1>
+      <p class="auth-subtitle">Real Help. Real Trust.</p>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label>Enter Mobile Number</label>
+        <input type="tel" id="login-mobile" class="form-control" placeholder="e.g. 9876543210" maxlength="10">
+      </div>
+      <button onclick="handleLoginSubmit()" class="btn" id="login-btn">Verify & Proceed</button>
+    </div>
+  </div>
+
+  <div id="dashboard-screen" class="screen">
+    <div class="header-bar">
+      <div class="user-info-tag"><i class="fa-solid fa-user-circle"></i> <span id="user-display-id">TH0000 - Name</span></div>
+      <button onclick="logout()" style="background:none; border:none; color:#EF4444; font-weight:600; font-size:14px;"><i class="fa-solid fa-sign-out-alt"></i></button>
+    </div>
+    <div class="fund-card">
+      <h3>Total TrueHelp Fund</h3>
+      <h1 id="total-fund-display">₹0.00</h1>
+    </div>
+    <div class="action-grid">
+      <button onclick="openProvideHelp()" class="btn btn-secondary"><i class="fa-solid fa-hand-holding-dollar"></i>Provide Help</button>
+      <button onclick="openGetHelp()" class="btn btn-outline"><i class="fa-solid fa-hand-holding-hand"></i>Get Help</button>
+    </div>
+    <button onclick="openReferralPanel()" class="btn full-width-btn"><i class="fa-solid fa-users"></i> Referral Zone</button>
+    <div class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent Public Contribution </div>
+    <div class="search-wrapper" style="margin-bottom: 15px;">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" class="search-input" placeholder="Search by Name, User ID or Txn ID..." onclick="openAllTransactionsScreen()" readonly style="cursor: pointer;">
+    </div>
+    <div class="log-list" id="dashboard-history-log-container"></div>
+    <button id="view-more-tx-btn" onclick="openAllTransactionsScreen()" class="btn btn-outline hidden" style="margin-top:20px; margin-bottom:15px; padding:12px; font-size:14px;"><i class="fa-solid fa-list"></i> View More Contribution </button>
+  </div>
+
+  <div id="all-transactions-screen" class="screen">
+    <div class="sticky-history-header">
+      <div class="section-title" style="margin-bottom: 15px;"><i class="fa-solid fa-arrow-left" onclick="showDashboard()"></i> Public Contribution History</div>
+      <div class="search-wrapper" style="margin-bottom: 5px;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="tx-search-box" class="search-input" placeholder="Search by Name, User ID or Txn ID..." oninput="filterTransactionHistory()">
+      </div>
+    </div>
+    <div class="scrollable-history-body">
+      <div class="log-list" id="full-history-log-container"></div>
+    </div>
+  </div>
+
+  <div id="provide-help-screen" class="screen">
+    <div class="section-title"><i class="fa-solid fa-arrow-left" onclick="showDashboard()"></i> Provide Assistance</div>
+    <div class="card">
+      <div class="form-group">
+        <label>Enter Contribution Amount (₹)</label>
+        <input type="number" id="p-amount" class="form-control" placeholder="Amount in Rupees">
+      </div>
+      <div class="form-group">
+        <label>Select App</label>
+        <select id="p-method" class="form-control">
+          <option value="PhonePe">PhonePe</option>
+          <option value="Paytm">Paytm</option>
+        </select>
+      </div>
+      <button onclick="triggerUPIPayment()" class="btn btn-secondary" style="margin-bottom:15px;">Pay Now</button>
+      <div id="utr-section" class="hidden">
+        <div class="form-group" style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
+          <label style="color:#EF4444;">Paste UTR / Reference Number</label>
+          <input type="text" id="p-utr" class="form-control" placeholder="Enter UTR /  Reference No.">
+        </div>
+        <button onclick="submitProvideHelpFinal()" class="btn" id="p-submit-btn">Submit Verification Proof</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="get-help-screen" class="screen">
+    <div class="section-title"><i class="fa-solid fa-arrow-left" onclick="showDashboard()"></i> Request Assistance</div>
+    <div class="card">
+      <div class="form-group">
+        <label>Required Amount (₹)</label>
+        <input type="number" id="g-amount" class="form-control" placeholder="Enter Amount">
+      </div>
+      <div class="form-group">
+        <label>Transfer Method Mode</label>
+        <select id="g-method" class="form-control" onchange="toggleGetHelpFields()">
+          <option value="UPI">UPI ID</option>
+          <option value="Bank">Bank Account Transfer</option>
+        </select>
+      </div>
+      <div id="g-upi-fields" class="form-group">
+        <label>Enter UPI ID</label>
+        <input type="text" id="g-upi" class="form-control" placeholder="example@upi">
+      </div>
+      <div id="g-bank-fields" class="hidden">
+        <div class="form-group">
+          <label>Bank Name</label>
+          <input type="text" id="g-bankname" class="form-control" placeholder="e.g. State Bank of India">
+        </div>
+        <div class="form-group">
+          <label>Account Number</label>
+          <input type="text" id="g-accnum" class="form-control" placeholder="Enter Account No.">
+        </div>
+        <div class="form-group">
+          <label>IFSC Code</label>
+          <input type="text" id="g-ifsc" class="form-control" placeholder="SBIN0001234">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Reason for Help (Emergency/Wajah)</label>
+        <textarea id="g-reason" class="form-control" rows="3" placeholder="Describe your genuine emergency situation..."></textarea>
+      </div>
+      <button onclick="submitGetHelpRequest()" class="btn btn-outline" id="g-submit-btn">Submit Request to Admin</button>
+    </div>
+  </div>
+
+  <div id="referral-screen" class="screen">
+    <div class="section-title"><i class="fa-solid fa-arrow-left" onclick="showDashboard()"></i> Referral Overview</div>
+    <div class="fund-card" style="background: linear-gradient(135deg, var(--secondary), #059669)">
+      <h3>Total Referred Members</h3>
+      <h1 id="ref-count-display">0</h1>
+    </div>
+    <div class="section-title"><i class="fa-solid fa-users-viewfinder"></i> Your Referral Code</div>
+    <div class="card" style="text-align:center; padding: 15px 25px; margin-bottom: 15px;">
+      <div style="font-size:24px; font-weight:800; color:var(--primary); border:2px dashed var(--secondary); padding: 10px; border-radius: 10px; margin-bottom: 15px;" id="user-ref-code-text">
+        TH0000
+      </div>
+      <button onclick="shareReferralLink()" class="btn btn-secondary"><i class="fa-solid fa-share-nodes"></i> Share Referral Link</button>
+    </div>
+    <div class="section-title" style="margin-top:20px;"><i class="fa-solid fa-list-ol"></i> Refer History</div>
+    <div class="log-list" id="refer-history-container"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="global-modal">
+  <div class="modal-card" id="modal-content-area"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
