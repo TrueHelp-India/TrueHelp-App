@@ -1,4 +1,4 @@
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxfncClK-pqEab5OOB_fTmxbt6m38J0F7at71a2Sr5A9l5STjBBd8R5iZ2Qgq9-bXvS/exec"; 
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxVIHDlQYg1wK0xP28d2sNzmWJKcVi0O5Sx_b9YwzvBAVGv1hstsrgjQTRbAxgjIpPu/exec"; 
 
 let currentUser = null;
 let globalSystemConfig = {};
