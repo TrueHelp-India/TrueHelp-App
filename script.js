@@ -19,9 +19,8 @@ function showScreen(screenId) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(screenId).classList.add('active');
 }
-
 function showDashboard() { showScreen('dashboard-screen'); }
-function toggleFetchOverlay(show) { if(show) document.getElementById('global-app-fetch-loader').classList.remove('hidden'); else document.getElementById('global-app-fetch-loader').classList.add('hidden'); }
+function toggleFetchOverlay(show) { document.getElementById('global-app-fetch-loader').classList.toggle('hidden', !show); }
 
 function parseToSafeTimestamp(dateInput) {
   if (!dateInput) return 0;
@@ -42,7 +41,7 @@ function formatCustomDateTime(dateInput) {
 
 function resolveTransactionIDValue(log) {
   if (!log) return "N/A";
-  let val = log.txId || log.transactionId || log.utr || log.reference || "N/A";
+  let val = log.txId || log.transactionId || log.txnId || log.utr || log.reference || "N/A";
   return String(val).trim();
 }
 
@@ -51,7 +50,7 @@ async function callBackendAPI(payload) {
   return await response.json();
 }
 
-// Logic: Pending upar, Success niche, Latest date upar
+// Updated Sorting Logic: Pending/New sabse uper
 function sortHistoryRecords(records) {
   return [...records].sort((a, b) => {
     let statusA = (a.status || "").toLowerCase() === "pending" ? 0 : 1;
@@ -63,28 +62,51 @@ function sortHistoryRecords(records) {
 
 async function handleLoginSubmit() {
   const mobile = document.getElementById('login-mobile').value.trim();
-  if(mobile.length !== 10) { alert("Invalid number."); return; }
+  if(mobile.length !== 10 || isNaN(mobile)) { alert("Please enter a valid 10-digit Indian Mobile Number."); return; }
   setLoading('login-btn', true, "Verify & Proceed");
   try {
     let res = await callBackendAPI({ action: "checkLogin", mobile: mobile });
     setLoading('login-btn', false, "Verify & Proceed");
     if(res && res.exists) { currentUser = { id: res.userId, name: res.name, mobile: mobile }; loadDashboardLifecycle(); } 
-    else openRegistrationPopup(mobile);
-  } catch(e) { setLoading('login-btn', false, "Verify & Proceed"); alert("Error."); }
+    else { openRegistrationPopup(mobile); }
+  } catch(e) { setLoading('login-btn', false, "Verify & Proceed"); alert("Network Error. Please try again."); }
 }
 
 function openRegistrationPopup(mobile) {
   const modal = document.getElementById('global-modal');
-  modal.innerHTML = `<div class="modal-card"><h3>Register</h3><input type="text" id="reg-name" class="form-control" placeholder="Full Name"><button onclick="submitRegistration('${mobile}')" class="btn">Submit</button></div>`;
+  document.getElementById('modal-content-area').innerHTML = `
+    <h3 style="color:var(--primary); font-size:18px;">Number Not Registered</h3>
+    <p style="font-size:13px; color:var(--text-muted); margin: 8px 0 20px;">You are not a registered member yet. Fill parameters to continue.</p>
+    <div class="form-group" style="text-align:left;">
+      <label>Full Name</label>
+      <input type="text" id="reg-name" class="form-control" placeholder="Enter Full Name">
+    </div>
+    <div class="form-group" style="text-align:left;">
+      <label>Referral Code (Optional)</label>
+      <input type="text" id="reg-ref" class="form-control" placeholder="e.g. TH4839" value="${autoReferredCode}">
+    </div>
+    <button onclick="submitRegistration('${mobile}')" class="btn btn-secondary">Create Account & Enter</button>
+  `;
   modal.classList.add('active');
 }
 
 async function submitRegistration(mobile) {
   const name = document.getElementById('reg-name').value.trim();
-  if(!name) return alert("Required");
+  const referral = document.getElementById('reg-ref').value.trim();
+  if(!name) { alert("Name field is mandatory."); return; }
   document.getElementById('global-modal').classList.remove('active');
-  let res = await callBackendAPI({ action: "registerUser", name: name, mobile: mobile });
-  if(res.success) { currentUser = { id: res.userId, name: res.name, mobile: mobile }; loadDashboardLifecycle(); }
+  setLoading('login-btn', true, "Verify & Proceed");
+  let res = await callBackendAPI({ action: "registerUser", name: name, mobile: mobile, referral: referral });
+  setLoading('login-btn', false, "Verify & Proceed");
+  if(res && res.success) {
+    currentUser = { id: res.userId, name: res.name, mobile: mobile };
+    document.getElementById('modal-content-area').innerHTML = `
+      <div class="modal-icon"><i class="fa-solid fa-circle-check"></i></div>
+      <h2 style="color:var(--primary);">Welcome to TrueHelp</h2>
+      <button onclick="closeModalAndGoDashboard()" class="btn">Go To Dashboard</button>
+    `;
+    document.getElementById('global-modal').classList.add('active');
+  } else { alert(res.error || "Registration failed."); }
 }
 
 function closeModalAndGoDashboard() { document.getElementById('global-modal').classList.remove('active'); loadDashboardLifecycle(); }
@@ -92,33 +114,44 @@ function closeModalAndGoDashboard() { document.getElementById('global-modal').cl
 async function loadDashboardLifecycle() {
   showScreen('dashboard-screen');
   document.getElementById('user-display-id').innerText = `${currentUser.id} - ${currentUser.name}`;
+  document.getElementById('user-ref-code-text').innerText = currentUser.id;
   toggleFetchOverlay(true);
   try {
     let res = await callBackendAPI({ action: "getDashboardData", userId: currentUser.id });
     toggleFetchOverlay(false);
     if(res && res.success) {
       globalSystemConfig = res;
-      document.getElementById('total-fund-display').innerText = "₹" + Number(res.totalFund || 0).toLocaleString('en-IN');
+      document.getElementById('total-fund-display').innerText = "₹" + Number(res.totalFund || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
       masterHistoryRecords = sortHistoryRecords(res.history || []);
       renderDashboardTransactionRows(masterHistoryRecords);
+      if(res.notification && res.notification.trim() !== "") triggerGlobalNotification(res.notification);
     }
-  } catch (e) { toggleFetchOverlay(false); }
+  } catch (e) { toggleFetchOverlay(false); alert("Error loading dashboard data."); }
 }
 
 function renderDashboardTransactionRows(records) {
   const container = document.getElementById('dashboard-history-log-container');
   const viewMoreBtn = document.getElementById('view-more-tx-btn');
   container.innerHTML = "";
+  if(!records || records.length === 0) { container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:13px;">No history records found.</div>`; viewMoreBtn.classList.add('hidden'); return; }
   records.slice(0, 4).forEach(log => {
     let isProvide = log.type === "Provide Help";
-    container.innerHTML += `<div class="log-item ${isProvide ? 'provide' : 'get'}"><div><div>${log.type}</div><p>${log.name}</p></div><div class="log-amount"><div>₹${Math.abs(log.amount)}</div><span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span></div></div>`;
+    container.innerHTML += `
+      <div class="log-item ${isProvide ? 'provide' : 'get'}">
+        <div class="log-details">
+          <div>${log.type}</div>
+          <p><i class="fa-solid fa-user-circle"></i> ${log.name}</p>
+          <span>Txn ID: ${resolveTransactionIDValue(log)}</span>
+          <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-solid fa-calendar-alt"></i> ${formatCustomDateTime(log.date)}</span>
+        </div>
+        <div class="log-amount">
+          <div style="color:${isProvide?'var(--secondary)':'#EF4444'}">₹${Math.abs(log.amount || 0).toLocaleString('en-IN')}</div>
+          <span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span>
+        </div>
+      </div>
+    `;
   });
   viewMoreBtn.classList.toggle('hidden', records.length <= 4);
-}
-
-function openAllTransactionsScreen() {
-  showScreen('all-transactions-screen');
-  renderFullTransactionRows(masterHistoryRecords);
 }
 
 function renderFullTransactionRows(records) {
@@ -126,9 +159,24 @@ function renderFullTransactionRows(records) {
   container.innerHTML = "";
   records.forEach(log => {
     let isProvide = log.type === "Provide Help";
-    container.innerHTML += `<div class="log-item ${isProvide ? 'provide' : 'get'}"><div><div>${log.type}</div><p>${log.name}</p></div><div class="log-amount"><div>₹${Math.abs(log.amount)}</div><span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span></div></div>`;
+    container.innerHTML += `
+      <div class="log-item ${isProvide ? 'provide' : 'get'}">
+        <div class="log-details">
+          <div>${log.type}</div>
+          <p><i class="fa-solid fa-user-circle"></i> ${log.name}</p>
+          <span>Txn ID: ${resolveTransactionIDValue(log)}</span>
+          <span style="font-size: 11px; color: var(--text-muted); margin-top: 2px;"><i class="fa-solid fa-calendar-alt"></i> ${formatCustomDateTime(log.date)}</span>
+        </div>
+        <div class="log-amount">
+          <div style="color:${isProvide?'var(--secondary)':'#EF4444'}">₹${Math.abs(log.amount || 0).toLocaleString('en-IN')}</div>
+          <span class="${log.status === 'Success' ? 'status-success' : 'status-pending'}">${log.status}</span>
+        </div>
+      </div>
+    `;
   });
 }
+
+function openAllTransactionsScreen() { showScreen('all-transactions-screen'); renderFullTransactionRows(masterHistoryRecords); }
 
 function filterTransactionHistory() {
   const searchVal = document.getElementById('tx-search-box').value.toLowerCase().trim();
@@ -141,16 +189,41 @@ function openProvideHelp() { showScreen('provide-help-screen'); }
 function triggerUPIPayment() {
   const amt = document.getElementById('p-amount').value.trim();
   const app = document.getElementById('p-method').value;
-  window.location.href = `${app.toLowerCase()}://pay?pa=${globalSystemConfig.upiId}&am=${amt}`;
+  window.location.href = `${app.toLowerCase()}://pay?pa=${globalSystemConfig.upiId}&am=${amt}&cu=INR&pn=TrueHelp`;
   setTimeout(() => document.getElementById('utr-section').classList.remove('hidden'), 1000);
 }
 
-function openGetHelp() { showScreen('get-help-screen'); }
+async function submitProvideHelpFinal() {
+  const utr = document.getElementById('p-utr').value.trim();
+  if(utr.length < 6) return alert("Valid UTR required.");
+  setLoading('p-submit-btn', true, "SUBMIT");
+  let res = await callBackendAPI({ action: "submitProvideHelp", userId: currentUser.id, amount: document.getElementById('p-amount').value, utr: utr });
+  setLoading('p-submit-btn', false, "Submit");
+  if(res.success) closeModalAndGoDashboard();
+}
 
+function openGetHelp() { showScreen('get-help-screen'); }
 function toggleGetHelpFields() {
   const mode = document.getElementById('g-method').value;
   document.getElementById('g-upi-fields').classList.toggle('hidden', mode !== 'UPI');
   document.getElementById('g-bank-fields').classList.toggle('hidden', mode !== 'Bank');
+}
+
+async function submitGetHelpRequest() {
+  setLoading('g-submit-btn', true, "Submit Request to Admin");
+  let res = await callBackendAPI({ action: "submitGetHelp", userId: currentUser.id, amount: document.getElementById('g-amount').value, reason: document.getElementById('g-reason').value });
+  setLoading('g-submit-btn', false, "Submit Request to Admin");
+  if(res.success) closeModalAndGoDashboard();
+}
+
+function openReferralPanel() {
+  showScreen('referral-screen');
+  document.getElementById('ref-count-display').innerText = globalSystemConfig.totalReferrals || 0;
+  const container = document.getElementById('refer-history-container');
+  container.innerHTML = "";
+  (globalSystemConfig.referHistory || []).forEach(r => {
+    container.innerHTML += `<div class="log-item"><div><strong>${r.name}</strong><br><small>ID: ${r.uid}</small></div><div>${formatCustomDateTime(r.date)}</div></div>`;
+  });
 }
 
 function shareReferralLink() {
@@ -159,9 +232,9 @@ function shareReferralLink() {
   alert("Referral link copied!");
 }
 
-function setLoading(btnId, isLoad, defaultText) {
-  const btn = document.getElementById(btnId);
-  if(btn) { btn.disabled = isLoad; btn.innerHTML = isLoad ? `<span class="loader"></span>` : defaultText; }
+function triggerGlobalNotification(text) {
+  document.getElementById('modal-content-area').innerHTML = `<h3>Announcement</h3><p>${text}</p><button onclick="document.getElementById('global-modal').classList.remove('active')" class="btn">Okay</button>`;
+  document.getElementById('global-modal').classList.add('active');
 }
 
 function logout() { currentUser = null; showScreen('login-screen'); }
