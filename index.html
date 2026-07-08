@@ -277,11 +277,21 @@
   </div>
 
   <div id="dashboard-screen" class="screen">
-    <div class="header-bar">
+     <div class="header-bar">
       <div class="user-info-tag"><i class="fa-solid fa-user-circle"></i> <span id="user-display-id">TH0000 - Name</span></div>
-      <button onclick="logout()" style="background:none; border:none; color:#EF4444; font-weight:600; font-size:14px;"><i class="fa-solid fa-sign-out-alt"></i></button>
+      
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <!-- Customer Support Icon (Headset with Mic) -->
+        <a href="mailto:ranjankspp888@gmail.com" style="color:var(--primary); font-size:18px;">
+          <i class="fa-solid fa-headset"></i>
+        </a>
+        
+        <!-- Logout Button -->
+        <button onclick="logout()" style="background:none; border:none; color:#EF4444; font-weight:600; font-size:16px;">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
+      </div>
     </div>
-
     <div class="fund-card">
       <h3>Total TrueHelp Fund</h3>
       <h1 id="total-fund-display">₹0.00</h1>
