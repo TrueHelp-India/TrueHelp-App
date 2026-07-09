@@ -15,22 +15,23 @@
       --text-muted: #6B7280;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); display: flex; justify-content: center; min-height: 100vh; }
+    
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
     
     .phone-container {
       width: 100%;
-      max-width: 480px;
       background: var(--bg);
       display: flex;
       flex-direction: column;
       position: relative;
       min-height: 100vh;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
 
     .screen { 
       display: none; 
       width: 100%; 
+      max-width: 800px;
+      margin: 0 auto;
       padding: 20px 20px 40px 20px; 
       flex-direction: column; 
       flex-grow: 1; 
@@ -38,14 +39,14 @@
     }
     .screen.active { display: flex; }
 
-    /* --- STICKY FIX FOR ALL TRANSACTIONS SCREEN --- */
     #all-transactions-screen {
-      padding: 0 0 40px 0 !important;
+      padding: 0 !important;
       display: none;
       flex-direction: column;
       height: 100vh;
       max-height: 100vh;
       overflow-y: hidden;
+      width: 100%;
     }
     #all-transactions-screen.active {
       display: flex;
@@ -59,90 +60,96 @@
       padding: 20px 20px 10px 20px;
       border-bottom: 1px dashed #CBD5E1;
       flex-shrink: 0;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
     }
     .scrollable-history-body {
       padding: 15px 20px 20px 20px;
       flex-grow: 1;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
     }
 
-    /* --- HTML/CSS VECTOR TRUEHELP LOGO SPLASH --- */
+    /* === NEW INTRO SCREEN STYLES === */
     #intro-screen {
       background: #ffffff;
       justify-content: center;
       align-items: center;
-      position: absolute;
-      z-index: 999;
+      position: fixed; 
+      z-index: 9999;
       top: 0; left: 0; right: 0; bottom: 0;
+      max-width: 100%; 
+      transition: opacity 0.5s ease;
     }
-    .logo-badge-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: pulse 3s infinite ease-in-out;
+    .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
-    .shield-emblem {
-      width: 130px;
-      height: 150px;
-      background: linear-gradient(135deg, #1F4E78, #133352);
-      clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      box-shadow: 0 10px 20px rgba(31,78,120,0.3);
-      border: 3px solid #ffffff;
+    .logo-graphic {
+        position: relative;
+        width: 130px;
+        height: 150px;
+        margin-bottom: 15px;
     }
-    .shield-inner-glow {
-      position: absolute;
-      width: 90%;
-      height: 92%;
-      background: transparent;
-      clip-path: polygon(50% 0%, 100% 20%, 100% 75%, 50% 100%, 0% 75%, 0% 20%);
-      border: 2px solid rgba(16, 185, 129, 0.4);
-      pointer-events: none;
+    .shield-svg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
     }
-    .rupee-symbol-mark {
-      font-size: 42px;
-      font-weight: 800;
-      color: #10B981;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      margin-bottom: 2px;
-      z-index: 2;
+    .inner-content {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding-top: 25px;
+        box-sizing: border-box;
     }
-    .handshake-icon-mark {
-      font-size: 32px;
-      color: #ffffff;
-      z-index: 2;
-      background: linear-gradient(135deg, #10B981, #059669);
-      padding: 8px 14px;
-      border-radius: 50%;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      border: 2px solid #ffffff;
-      margin-top: 5px;
+    .rupee-icon {
+        color: #24a169;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1;
+        margin-bottom: 2px;
     }
-    .brand-text-intro {
-      font-size: 28px;
-      font-weight: 800;
-      color: #1F4E78;
-      margin-top: 18px;
-      letter-spacing: 0.5px;
+    .handshake-icon {
+        color: #24a169;
+        font-size: 38px;
     }
-    .brand-text-intro span { color: #10B981; }
-    .brand-slogan-intro {
-      font-size: 11px;
-      font-weight: 700;
-      color: #6B7280;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 4px;
+    .brand-name {
+        font-size: 42px;
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: -0.5px;
     }
+    .color-true {
+        color: #175065; 
+    }
+    .color-help {
+        color: #24a169;
+    }
+    .tagline {
+        font-size: 13px;
+        color: #6b6b6b;
+        letter-spacing: 2px;
+        margin-top: 5px;
+        font-weight: 500;
+    }
+    /* =============================== */
 
-    /* --- FORM STYLE MODULES --- */
-    .auth-title { text-align: center; font-size: 26px; font-weight: 800; color: var(--primary); margin-bottom: 5px; }
+    .auth-title { text-align: center; font-size: 26px; font-weight: 800; margin-bottom: 5px; }
     .auth-subtitle { text-align: center; color: var(--secondary); font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px; }
     
     .card { background: var(--card-bg); padding: 25px; border-radius: 16px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
@@ -171,7 +178,6 @@
 
     .section-title { font-size: 16px; font-weight: 700; color: var(--primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
     
-    /* Search Bar Design Element */
     .search-wrapper { margin-bottom: 15px; position: relative; }
     .search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 14px; }
     .search-input { width: 100%; padding: 10px 16px 10px 38px; border: 1.5px solid #E5E7EB; border-radius: 10px; font-size: 14px; outline: none; background: #FFFFFF; transition: 0.2s; }
@@ -204,7 +210,6 @@
     .detail-row span:first-child { color: var(--text-muted); }
     .detail-row span:last-child { font-weight: 600; }
 
-    /* --- FAST GLOBAL APP LOADING OVERLAY --- */
     .app-fetch-loading-overlay {
       position: absolute;
       top:0; left:0; right:0; bottom:0;
@@ -232,6 +237,49 @@
       letter-spacing: 0.5px;
     }
 
+    /* CUSTOM COPY & PASTE STYLES */
+    .input-with-btn {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .input-with-btn .form-control {
+      padding-right: 85px; 
+    }
+    .action-btn-inside {
+      position: absolute;
+      right: 6px;
+      background: var(--secondary);
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .action-btn-inside:active { transform: scale(0.95); }
+    
+    .copy-badge-btn {
+      background: #E5E7EB;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      color: var(--primary);
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: 0.2s;
+    }
+    .copy-badge-btn:hover { background: #D1D5DB; }
+
     @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     
@@ -250,22 +298,35 @@
     <div class="loading-spinner-text">Please Wait...</div>
   </div>
 
+  <!-- UPDATED INTRO SCREEN WITH BOLD SHIELD LOGO -->
   <div id="intro-screen" class="screen active">
-    <div class="logo-badge-container">
-      <div class="shield-emblem">
-        <div class="shield-inner-glow"></div>
-        <div class="rupee-symbol-mark">₹</div>
-        <div class="handshake-icon-mark"><i class="fa-solid fa-handshake"></i></div>
-      </div>
-      <h1 class="brand-text-intro">True<span>Help</span></h1>
-      <p class="brand-slogan-intro">Real Help. Real Trust.</p>
+    <div class="logo-container">
+        <div class="logo-graphic">
+            <svg class="shield-svg" viewBox="0 0 100 115" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5 L95 15 L95 65 C95 95 75 105 50 112 C25 105 5 95 5 65 L5 15 Z" 
+                      fill="none" 
+                      stroke="#175065" 
+                      stroke-width="10" 
+                      stroke-linejoin="round"/>
+            </svg>
+            <div class="inner-content">
+                <div class="rupee-icon">₹</div>
+                <i class="fa-solid fa-handshake handshake-icon"></i>
+            </div>
+        </div>
+        <h1 class="brand-name">
+            <span class="color-true">True</span><span class="color-help">Help</span>
+        </h1>
+        <div class="tagline">REAL HELP. REAL TRUST.</div>
     </div>
   </div>
 
+  <!-- LOGIN SCREEN (Updated Title Colors) -->
   <div id="login-screen" class="screen">
     <div style="margin-top: 40px;">
-      <h1 class="auth-title">TrueHelp</h1>
-      <p class="auth-subtitle">Real Help. Real Trust.</p>
+      <h1 class="auth-title"><span class="color-true">True</span><span class="color-help">Help</span></h1>
+     <p class="auth-subtitle" style="color: black;">Real Help. Real Trust.</p>
+
     </div>
     <div class="card">
       <div class="form-group">
@@ -278,26 +339,20 @@
 
   <div id="dashboard-screen" class="screen">
      <div class="header-bar">
-  <div class="user-info-tag"><i class="fa-solid fa-user-circle"></i> <span id="user-display-id">TH0000 - Name</span></div>
-  
-  <div style="display: flex; align-items: center; gap: 15px;">
-    
-    <!-- 1. About Button -->
-    <a href="https://truehelp-india.github.io/TrueHelp-Community-Term-Condition/" style="text-decoration:none; color:#333; font-weight:600; font-size:14px;">
-      About
-    </a>
-
-    <!-- 2. Customer Support Icon -->
-    <a href="mailto:ranjankspp888@gmail.com" style="color:var(--primary); font-size:18px;">
-      <i class="fa-solid fa-headset"></i>
-    </a>
-    
-    <!-- 3. Logout Button -->
-    <button onclick="logout()" style="background:none; border:none; color:#EF4444; font-weight:600; font-size:16px;">
-      <i class="fa-solid fa-sign-out-alt"></i>
-    </button>
-  </div>
-</div>
+      <div class="user-info-tag"><i class="fa-solid fa-user-circle"></i> <span id="user-display-id">TH0000 - Name</span></div>
+      
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <a href="https://truehelp-india.github.io/TrueHelp-Community-Term-Condition/" style="text-decoration:none; color:#333; font-weight:600; font-size:14px;">
+          About
+        </a>
+        <a href="mailto:ranjankspp888@gmail.com" style="color:var(--primary); font-size:18px;">
+          <i class="fa-solid fa-headset"></i>
+        </a>
+        <button onclick="logout()" style="background:none; border:none; color:#EF4444; font-weight:600; font-size:16px;">
+          <i class="fa-solid fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
 
     <div class="fund-card">
       <h3>Total TrueHelp Fund</h3>
@@ -336,9 +391,31 @@
     </div>
   </div>
 
+  <!-- UPDATED PROVIDE HELP SCREEN -->
   <div id="provide-help-screen" class="screen">
     <div class="section-title"><i class="fa-solid fa-arrow-left" onclick="showDashboard()"></i> Provide Help</div>
     <div class="card">
+      
+      <!-- Dynamic QR Section With Loading Spinner -->
+      <div style="text-align: center; margin-bottom: 25px; background: #F9FAFB; padding: 15px; border-radius: 12px; border: 1px dashed #CBD5E1;">
+        <h3 style="font-size: 15px; color: var(--primary); margin-bottom: 12px;">Scan QR Code to Pay</h3>
+        
+        <div style="position: relative; width: 180px; height: 180px; margin: 0 auto;">
+          <!-- Loading Spinner Wrapper -->
+          <div id="qr-loading-spinner" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #F9FAFB; border-radius: 8px;">
+            <div class="loader" style="width: 40px; height: 40px; border-width: 4px;"></div>
+          </div>
+          <!-- QR Image (Hides loading spinner once image loads using onload event) -->
+          <img id="dynamic-qr-code" src="" alt="Payment QR Code" style="width: 180px; height: 180px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); opacity: 0; transition: opacity 0.3s;" onload="this.style.opacity=1; document.getElementById('qr-loading-spinner').style.display='none';" onerror="this.style.opacity=1; document.getElementById('qr-loading-spinner').style.display='none';">
+        </div>
+        
+        <!-- NEW: Dynamic Copy UPI ID Section -->
+        <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+          <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);" id="display-admin-upi"></div>
+          <button onclick="copyUpiId()" id="copy-upi-btn" class="copy-badge-btn"><i class="fa-regular fa-copy"></i> Copy</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label>Enter Contribution Amount (₹)</label>
         <input type="number" id="p-amount" class="form-control" placeholder="Amount in Rupees">
@@ -348,14 +425,20 @@
         <select id="p-method" class="form-control">
           <option value="PhonePe">PhonePe</option>
           <option value="Paytm">Paytm</option>
+          <option value="Google Pay">Google Pay</option>
+          <option value="Other UPI">Other UPI</option>
         </select>
       </div>
-      <button onclick="triggerUPIPayment()" class="btn btn-secondary" style="margin-bottom:15px;">Pay Now</button>
       
-      <div id="utr-section" class="hidden">
+      <!-- UTR and Submit section made always visible -->
+      <div id="utr-section">
         <div class="form-group" style="border-top: 1px dashed #CBD5E1; padding-top: 15px;">
           <label style="color:#EF4444;">Paste UTR / Reference Number</label>
-          <input type="text" id="p-utr" class="form-control" placeholder="Enter UTR /  Reference No.">
+          <!-- NEW: Input with Inside Paste Button -->
+          <div class="input-with-btn">
+            <input type="text" id="p-utr" class="form-control" placeholder="Enter UTR /  Reference No.">
+            <button onclick="pasteUtr()" class="action-btn-inside"><i class="fa-solid fa-clipboard"></i> Paste</button>
+          </div>
         </div>
         <button onclick="submitProvideHelpFinal()" class="btn" id="p-submit-btn">Submit Verification Proof</button>
       </div>
@@ -439,17 +522,25 @@
   let autoReferredCode = "";
   let masterHistoryRecords = []; 
 
+  window.currentAdminUpi = "";
+
   window.addEventListener('DOMContentLoaded', () => {
     const urlParams = new URLSearchParams(window.location.search);
     if(urlParams.has('ref')) {
       autoReferredCode = urlParams.get('ref').trim();
     }
 
+    // NEW INTRO TIMING (3 seconds with smooth fadeout)
     setTimeout(() => {
-      document.getElementById('intro-screen').classList.remove('active');
-      document.getElementById('intro-screen').style.display = 'none';
-      document.getElementById('login-screen').classList.add('active');
-    }, 2000);
+      const introScreen = document.getElementById('intro-screen');
+      introScreen.style.opacity = '0';
+      
+      setTimeout(() => {
+        introScreen.classList.remove('active');
+        introScreen.style.display = 'none';
+        document.getElementById('login-screen').classList.add('active');
+      }, 500); 
+    }, 3000);
   });
 
   function showScreen(screenId) {
@@ -840,31 +931,50 @@
   function openProvideHelp() {
     document.getElementById('p-amount').value = "";
     document.getElementById('p-utr').value = "";
-    document.getElementById('utr-section').classList.add('hidden');
+    
+    document.getElementById('qr-loading-spinner').style.display = 'flex';
+    document.getElementById('dynamic-qr-code').style.opacity = '0';
+    
+    const adminUpi = globalSystemConfig.upiId || "8873903209@ptyes"; 
+    window.currentAdminUpi = adminUpi; 
+    
+    const upiLink = `upi://pay?pa=${adminUpi}&pn=TrueHelp%20Admin&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+    
+    document.getElementById('dynamic-qr-code').src = qrUrl;
+    document.getElementById('display-admin-upi').innerText = `UPI ID: ${adminUpi}`;
+
+    const copyBtn = document.getElementById('copy-upi-btn');
+    if (copyBtn) {
+      copyBtn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+    }
+    
     showScreen('provide-help-screen');
   }
 
-  function triggerUPIPayment() {
-    const amt = document.getElementById('p-amount').value.trim();
-    if(!amt || isNaN(amt) || Number(amt) <= 0) { alert("Please input a valid amount."); return; }
-    
-    const upiTarget = globalSystemConfig.upiId;
-    const payeeName = "TrueHelp Admin";
-    const appSelected = document.getElementById('p-method').value;
-    
-    let upiString = `upi://pay?pa=${upiTarget}&pn=${encodeURIComponent(payeeName)}&am=${amt}&cu=INR`;
-    
-    if(appSelected === "PhonePe") {
-      window.location.href = "phonepe://pay?pa=" + upiTarget + "&pn=" + encodeURIComponent(payeeName) + "&am=" + amt + "&cu=INR";
-    } else if(appSelected === "Paytm") {
-      window.location.href = "paytmmp://pay?pa=" + upiTarget + "&pn=" + encodeURIComponent(payeeName) + "&am=" + amt + "&cu=INR";
-    } else {
-      window.location.href = upiString;
+  function copyUpiId() {
+    if (window.currentAdminUpi) {
+      navigator.clipboard.writeText(window.currentAdminUpi).then(() => {
+        const btn = document.getElementById('copy-upi-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        }, 2000);
+      }).catch(err => {
+        alert("Failed to copy. Please try manually.");
+      });
     }
-    
-    setTimeout(() => {
-      document.getElementById('utr-section').classList.remove('hidden');
-    }, 1500);
+  }
+
+  async function pasteUtr() {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text) {
+        document.getElementById('p-utr').value = text;
+      }
+    } catch (err) {
+      alert("Please allow clipboard permissions or paste manually.");
+    }
   }
 
   async function submitProvideHelpFinal() {
@@ -872,6 +982,7 @@
     const method = document.getElementById('p-method').value;
     const utr = document.getElementById('p-utr').value.trim();
     
+    if(!amt || isNaN(amt) || Number(amt) <= 0) { alert("Please input a valid amount."); return; }
     if(utr.length < 6) { alert("Please provide a valid transaction reference / UTR number."); return; }
     
     setLoading('p-submit-btn', true, "SUBMIT");
